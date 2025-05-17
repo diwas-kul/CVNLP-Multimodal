@@ -1,0 +1,45 @@
+# config/base_multimodal_resnet50.yaml
+
+# Dataset configuration
+data:
+  data_path: "/home/diwas/CVNLP/CVNLP/data"
+  train_file: "train_data_50k_split.csv"
+  test_file: "test_data_50k_split.csv"
+  max_images: 16
+  random_sample: true
+  regression_target: "price"
+  classification_target: "price_cat_50k"
+  use_text: true
+  use_images: true
+
+# Model configuration
+model:
+  encoder_type: "vit_b_16"  # Options: "resnet50", "vit_b_16"
+  pooling_type: "mean"  # Options: "attention", "mean"
+  freeze_backbone: false
+  use_pretrained: true
+  dropout_rate: 0.2
+  text_encoder_model: "all-mpnet-base-v2"
+  fusion_type: "concat"  # Options: "concat", "sum"
+
+# Training configuration
+train:
+  batch_size: 8
+  test_batch_size: 8
+  num_workers: 8
+  pin_memory: true
+  num_epochs: 100
+  learning_rate: 0.0001
+  weight_decay: 0.00001
+  regression_weight: 1.0
+  classification_weight: 1.0
+  scheduler_patience: 5
+  scheduler_factor: 0.5
+  early_stopping_patience: 10
+  balanced_sampler: false
+
+# Logging
+logging:
+  log_dir: "work_dir"
+  save_checkpoint_frequency: 10
+  log_interval: 10

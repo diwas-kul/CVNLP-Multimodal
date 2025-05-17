@@ -1,0 +1,33 @@
+# ResNet50 hyperparameter search configuration
+
+# Base model configuration
+base_config: "config/base_resnet50.yaml"
+
+# Search space
+search_space:
+  # Model parameters
+  pooling_type: ["mean", "attention"]
+  freeze_backbone: [true, false]
+  
+  # Training parameters
+  learning_rate: [0.001, 0.0001]
+  weight_decay: [0.0001, 0.00001]
+  balanced_sampler: [true]
+
+# Batch size configuration based on freeze_backbone
+batch_size_config:
+  true: 64   # When backbone is frozen
+  false: 8   # When training full model
+
+# Training settings for hyperparameter search
+max_epochs: 20
+early_stopping_patience: 5
+
+# Study settings
+n_trials: 16  # 2^4 combinations for the main parameters
+study_name: "resnet50_hyperparameter_search"
+optimization_direction: "minimize"  # Minimize validation loss
+timeout: null  # No timeout
+
+# Results directory
+results_dir: "results/hyperparameter_search"

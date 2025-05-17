@@ -1,0 +1,41 @@
+# config/text_only.yaml
+
+# Dataset configuration
+data:
+  data_path: "/home/diwas/CVNLP/CVNLP/data"
+  train_file: "train_data_50k_split.csv"
+  test_file: "test_data_50k_split.csv"
+  regression_target: "price"
+  classification_target: "price_cat_50k"
+  use_text: true
+  use_images: false
+
+# Model configuration
+model:
+  text_encoder_model: "bert-base-uncased"  # Model name
+  text_encoder_type: "bert"                # Use BERT instead of SentenceTransformer
+  dropout_rate: 0.2
+  freeze_text_encoder: false  # Set to false to enable fine-tuning
+  max_text_length: 512
+
+# Training configuration
+train:
+  batch_size: 32
+  test_batch_size: 32
+  num_workers: 16
+  pin_memory: true
+  num_epochs: 100
+  learning_rate: 0.00005
+  weight_decay: 0.000001
+  regression_weight: 1.0
+  classification_weight: 1.0
+  scheduler_patience: 5
+  scheduler_factor: 0.5
+  early_stopping_patience: 10
+  balanced_sampler: false
+
+# Logging
+logging:
+  log_dir: "work_dir"
+  save_checkpoint_frequency: 10
+  log_interval: 10

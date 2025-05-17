@@ -1,0 +1,56 @@
+# config/base_multimodal_resnet50.yaml
+
+# Dataset configuration
+data:
+  data_path: "/home/diwas/CVNLP/CVNLP/data"
+  train_file: "train_data_50k_split.csv"
+  test_file: "test_data_50k_split.csv"
+  max_images: 8
+  random_sample: true
+  regression_target: "price"
+  classification_target: "price_cat_50k"
+  use_text: true
+  use_images: true
+
+# Model configuration
+model:
+  encoder_type: "resnet50"  # Options: "resnet50", "vit_b_16"
+  pooling_type: "mean"  # Options: "attention", "mean"
+  freeze_backbone: false
+  use_pretrained: true
+  dropout_rate: 0.2
+  fusion_type: "attention"  # Options: "concat", "attention"
+  text_encoder_model: "bert-base-uncased"  # Model name
+  text_encoder_type: "bert"                # Use BERT instead of SentenceTransformer
+  freeze_text_encoder: false  # Set to false to enable fine-tuning
+  max_text_length: 512
+  multi_lr: true # Use different learning rates
+  text_lr: 0.00005
+  image_lr: 0.00005
+  fusion_lr: 0.0001
+  modality_dropout: true
+  image_checkpoint: false
+  text_checkpoint: false
+  # text_checkpoint: "/home/diwas/CVNLP/CVNLP/image_train/work_dir/ALL_OLD/BERT_BASE_UNCASED_AUG_BACK_TRANSLATE/best_model.pt"
+
+# Training configuration
+train:
+  batch_size: 12
+  test_batch_size: 12
+  num_workers: 16
+  pin_memory: true
+  num_epochs: 100
+  learning_rate: 0.0001
+  weight_decay: 0.000001
+  regression_weight: 1.0
+  classification_weight: 1.0
+  scheduler_patience: 10
+  scheduler_factor: 0.5
+  early_stopping_patience: 20
+  balanced_sampler: false
+
+# Logging
+logging:
+  log_dir: "work_dir"
+  save_checkpoint_frequency: 10
+  log_interval: 10

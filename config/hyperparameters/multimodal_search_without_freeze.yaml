@@ -1,0 +1,51 @@
+# Multimodal model hyperparameter search configuration
+# Base model configuration
+base_config: "config/base_multimodal_resnet50.yaml"
+
+# Search space
+search_space:
+  # Fusion parameters
+  fusion_type: ["concat", "attention"]
+  modality_dropout: [true, false]
+  
+  # Freezing strategies
+  freeze_backbone: [false]
+  freeze_text_encoder: [false]
+  
+  # Learning rate configurations
+  text_lr: 
+    low: 0.00001
+    high: 0.0001
+    log: true
+  image_lr:
+    low: 0.00001
+    high: 0.0001
+    log: true
+  fusion_lr:
+    low: 0.00005
+    high: 0.0005
+    log: true
+    
+  # Regularization
+  dropout_rate: [0.2, 0.3, 0.5]
+  weight_decay: [0.000001, 0.00001]
+
+# Batch size configuration based on freeze options
+batch_size_config:
+  "true-true": 32   # Both encoders frozen
+  "true-false": 32   # Only image encoder frozen
+  "false-true": 16   # Only text encoder frozen
+  "false-false": 12  # Both encoders trainable
+
+# Training settings for hyperparameter search
+max_epochs: 8
+early_stopping_patience: 4
+
+# Study settings
+n_trials: 8  # We'll use sampling instead of grid search due to large parameter space
+study_name: "multimodal_hyperparameter_search"
+optimization_direction: "minimize"  # Minimize validation loss
+timeout: null  # No timeout
+
+# Results directory
+results_dir: "results/multimodal_hyperparameter_search"

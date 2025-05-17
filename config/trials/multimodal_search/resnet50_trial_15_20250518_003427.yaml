@@ -1,0 +1,61 @@
+data:
+  classification_target: price_cat_50k
+  data_path: /home/diwas/CVNLP/CVNLP/data
+  max_images: 8
+  random_sample: true
+  regression_target: price
+  test_file: test_data_50k_split.csv
+  train_file: train_data_50k_split.csv
+  use_images: true
+  use_text: true
+experiment: resnet50_trial_15_20250518_003427
+logging:
+  log_dir: work_dir
+  log_interval: 10
+  save_checkpoint_frequency: 10
+model:
+  dropout_rate: 0.5
+  encoder_type: resnet50
+  freeze_backbone: true
+  freeze_text_encoder: false
+  fusion_lr: 8.454298448312075e-05
+  fusion_type: concat
+  image_checkpoint: false
+  image_lr: 1.848858831259373e-05
+  max_text_length: 512
+  modality_dropout: false
+  multi_lr: true
+  pooling_type: mean
+  text_checkpoint: false
+  text_encoder_model: bert-base-uncased
+  text_encoder_type: bert
+  text_lr: 2.5074757621912408e-05
+  use_pretrained: true
+optuna_trial:
+  batch_size: 32
+  number: 15
+  params:
+    dropout_rate: 0.5
+    freeze_backbone: true
+    freeze_text_encoder: false
+    fusion_lr: 8.454298448312075e-05
+    fusion_type: concat
+    image_lr: 1.848858831259373e-05
+    modality_dropout: false
+    text_lr: 2.5074757621912408e-05
+    weight_decay: 1.0e-06
+  timestamp: '20250518_003427'
+train:
+  balanced_sampler: false
+  batch_size: 32
+  classification_weight: 1.0
+  early_stopping_patience: 4
+  learning_rate: 0.0001
+  num_epochs: 8
+  num_workers: 16
+  pin_memory: true
+  regression_weight: 1.0
+  scheduler_factor: 0.5
+  scheduler_patience: 10
+  test_batch_size: 32
+  weight_decay: 1.0e-06
