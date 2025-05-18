@@ -1,7 +1,6 @@
 import os
 import time
 import torch
-import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 from tqdm.auto import tqdm
@@ -10,7 +9,7 @@ import json
 import gc
 from datetime import datetime
 
-from utils.logging import ContrastiveLogger,  save_checkpoint
+from utils.logging import ContrastiveLogger, save_checkpoint
 from training.losses import InfoNCELoss
 
 class ContrastiveTrainer:
@@ -41,12 +40,13 @@ class ContrastiveTrainer:
         # Loss function
         self.criterion = InfoNCELoss(temperature=config['contrastive']['temperature'])
         
-        # Optimizer
-        self.optimizer = optim.AdamW(
-            filter(lambda p: p.requires_grad, model.parameters()),
-            lr=config['contrastive']['learning_rate'],
-            weight_decay=config['contrastive']['weight_decay']
-        )
+        # Optimizer with much higher learning rate
+        self.optimizer = optim.AdamW([
+            {'params': model.image_encoder.parameters(), 'lr': 0.00001},
+            {'params': model.text_encoder.parameters(), 'lr': 0.00001},
+            {'params': model.image_projection.parameters(), 'lr': 0.001},
+            {'params': model.text_projection.parameters(), 'lr': 0.001}
+        ], weight_decay=config['contrastive']['weight_decay'])
         
         # Learning rate scheduler
         self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(
@@ -132,6 +132,9 @@ class ContrastiveTrainer:
                     filename='best_contrastive_model.pt'
                 )
                 print(f"✓ New best model saved! (val_loss: {self.best_val_loss:.4f})")
+                
+                # Save best encoders separately
+                self._save_best_encoders()
             else:
                 self.epochs_without_improvement += 1
                 
@@ -210,17 +213,31 @@ class ContrastiveTrainer:
             # Compute loss
             loss = self.criterion(outputs['image_proj'], outputs['text_proj'])
             
-            # Compute accuracy
-            similarity = self.model.compute_similarity(outputs['image_proj'], outputs['text_proj'])
-            batch_size = images.size(0)
-            labels = torch.arange(batch_size, device=self.device)
-            i2t_accuracy = (torch.argmax(similarity, dim=1) == labels).float().mean().item()
-            t2i_accuracy = (torch.argmax(similarity, dim=0) == labels).float().mean().item()
-            accuracy = (i2t_accuracy + t2i_accuracy) / 2
+            # Debug: Print the loss value
+            if step == 0:
+                print(f"\nInitial loss value: {loss.item()}")
+            
+            # Verify non-nan loss
+            if torch.isnan(loss).any():
+                print("WARNING: NaN loss detected!")
+                continue
             
             # Backward pass and optimize
             loss.backward()
+            
+            # Clip gradients to avoid exploding gradients
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+            
             self.optimizer.step()
+            
+            # Compute accuracy
+            with torch.no_grad():
+                similarity = self.model.compute_similarity(outputs['image_proj'], outputs['text_proj'])
+                batch_size = images.size(0)
+                labels = torch.arange(batch_size, device=self.device)
+                i2t_accuracy = (torch.argmax(similarity, dim=1) == labels).float().mean().item()
+                t2i_accuracy = (torch.argmax(similarity, dim=0) == labels).float().mean().item()
+                accuracy = (i2t_accuracy + t2i_accuracy) / 2
             
             # Record metrics
             total_loss += loss.item()
@@ -331,32 +348,42 @@ class ContrastiveTrainer:
         if self.epochs_without_improvement > 0:
             print(f"  No improvement for {self.epochs_without_improvement} epochs (best: {self.best_val_loss:.4f} at epoch {self.best_epoch+1})")
 
-    def _save_encoders(self):
-        """Save image and text encoders separately"""
+    def _save_best_encoders(self):
+        """Save image and text encoders separately for the best model."""
         # Create directory for encoders
         encoders_dir = os.path.join(self.experiment_dir, 'encoders')
         os.makedirs(encoders_dir, exist_ok=True)
         
         # Save image encoder
         image_encoder_state = {
-            'model_state_dict': self.model.image_encoder.state_dict(),
-            'config': self.config['model']
+            'model_state_dict': {
+                'image_encoder': self.model.image_encoder.state_dict()
+            },
+            'epoch': self.best_epoch,
+            'metrics': {'contrastive_loss': self.best_val_loss},
+            'type': 'contrastive_pretrained'
         }
-        torch.save(image_encoder_state, os.path.join(encoders_dir, 'image_encoder.pt'))
+        torch.save(image_encoder_state, os.path.join(encoders_dir, 'best_image_encoder_checkpoint.pt'))
         
-        # Save text encoder
+        # Save text encoder 
+        # Add 'text_encoder.' prefix to match main.py's expected format
+        text_encoder_dict = {}
+        for k, v in self.model.text_encoder.state_dict().items():
+            text_encoder_dict[f'text_encoder.{k}'] = v
+            
         text_encoder_state = {
-            'model_state_dict': self.model.text_encoder.state_dict(),
-            'config': self.config['model']
+            'model_state_dict': text_encoder_dict,
+            'epoch': self.best_epoch,
+            'metrics': {'contrastive_loss': self.best_val_loss},
+            'type': 'contrastive_pretrained'
         }
-        torch.save(text_encoder_state, os.path.join(encoders_dir, 'text_encoder.pt'))
+        torch.save(text_encoder_state, os.path.join(encoders_dir, 'best_text_encoder_checkpoint.pt'))
         
-        # Save projection heads in case we want to use them later
+        # Save projection heads (optional, in case you want to continue training)
         projection_heads_state = {
             'image_projection': self.model.image_projection.state_dict(),
-            'text_projection': self.model.text_projection.state_dict(),
-            'config': self.config['contrastive']
+            'text_projection': self.model.text_projection.state_dict()
         }
-        torch.save(projection_heads_state, os.path.join(encoders_dir, 'projection_heads.pt'))
+        torch.save(projection_heads_state, os.path.join(encoders_dir, 'best_projection_heads.pt'))
         
-        print(f"Saved encoders to {encoders_dir}")
+        print(f"✓ Saved best encoders to {encoders_dir}")

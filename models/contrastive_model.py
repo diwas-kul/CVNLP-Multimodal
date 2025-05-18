@@ -12,7 +12,7 @@ class ContrastiveModel(nn.Module):
                  text_encoder_model="bert-base-uncased",
                  text_encoder_type='bert',
                  freeze_backbone=False,
-                 freeze_text_encoder=True,
+                 freeze_text_encoder=False,
                  projection_dim=256,
                  temperature=0.07,
                  pretrained=True):
@@ -29,6 +29,8 @@ class ContrastiveModel(nn.Module):
         """
         super().__init__()
         
+        print(f"Initializing ContrastiveModel with freeze_backbone={freeze_backbone}, freeze_text_encoder={freeze_text_encoder}")
+        
         # Image encoder
         self.image_encoder = ImageEncoder(encoder_type, pretrained, out_dim=512, freeze_backbone=freeze_backbone)
         
@@ -42,15 +44,19 @@ class ContrastiveModel(nn.Module):
         
         # Projection heads
         self.image_projection = nn.Sequential(
+            nn.LayerNorm(512),
             nn.Linear(512, 512),
-            nn.ReLU(),
-            nn.Linear(512, projection_dim)
+            nn.GELU(),
+            nn.LayerNorm(512),
+            nn.Linear(512, projection_dim),
         )
         
         self.text_projection = nn.Sequential(
+            nn.LayerNorm(512),
             nn.Linear(512, 512),
-            nn.ReLU(),
-            nn.Linear(512, projection_dim)
+            nn.GELU(),
+            nn.LayerNorm(512),
+            nn.Linear(512, projection_dim),
         )
         
         self.temperature = temperature
@@ -86,7 +92,7 @@ class ContrastiveModel(nn.Module):
         image_proj = self.image_projection(image_embeddings)  # [B, projection_dim]
         text_proj = self.text_projection(text_embeddings)  # [B, projection_dim]
         
-        # Normalize projections
+        # Normalize projections (crucial for contrastive learning)
         image_proj = F.normalize(image_proj, p=2, dim=1)
         text_proj = F.normalize(text_proj, p=2, dim=1)
         

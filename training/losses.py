@@ -63,18 +63,19 @@ class InfoNCELoss(nn.Module):
         Returns:
             loss: InfoNCE loss
         """
-        # Compute similarity matrices
-        image_text_sim = torch.matmul(image_proj, text_proj.t()) / self.temperature
+        batch_size = image_proj.shape[0]
+        
+        # Compute similarity matrices (cosine similarity)
+        logits = torch.matmul(image_proj, text_proj.t()) / self.temperature
         
         # Create labels (diagonal is positive pairs)
-        batch_size = image_proj.shape[0]
         labels = torch.arange(batch_size, device=image_proj.device)
         
         # Compute cross entropy loss (both directions)
-        loss_i2t = F.cross_entropy(image_text_sim, labels)
-        loss_t2i = F.cross_entropy(image_text_sim.t(), labels)
+        i2t_loss = F.cross_entropy(logits, labels)
+        t2i_loss = F.cross_entropy(logits.t(), labels)
         
         # Average the losses
-        loss = (loss_i2t + loss_t2i) / 2.0
+        loss = (i2t_loss + t2i_loss) / 2.0
         
         return loss
