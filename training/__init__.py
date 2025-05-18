@@ -1,9 +1,11 @@
 from training.dataset import PropertyImageDataset
-from training.losses import CombinedLoss
+from training.losses import CombinedLoss, InfoNCELoss
 from training.trainer import Trainer
+from training.contrastive_trainer import ContrastiveTrainer
 
 __all__ = [
     'PropertyImageDataset',
-    'CombinedLoss',
-    'Trainer'
+    'CombinedLoss', 'InfoNCELoss',
+    'Trainer',
+    'ContrastiveTrainer'
 ]

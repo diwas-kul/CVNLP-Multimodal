@@ -287,7 +287,9 @@ def run_experiment(config=None):
             'pooling_type': config['model']['pooling_type'],
             'freeze_backbone': config['model']['freeze_backbone'],
         })
-        image_checkpoint = torch.load(config['model']['image_checkpoint'], weights_only=True) if config['model'].get('image_checkpoint', False) else False
+        # Check for regular checkpoint
+        if config['model'].get('image_checkpoint', False):
+            image_checkpoint = torch.load(config['model']['image_checkpoint'], map_location=device, weights_only=True)
 
     # Add text-specific parameters only if using text
     if config['data'].get('use_text', False):
@@ -296,7 +298,9 @@ def run_experiment(config=None):
             'text_encoder_type': config['model']['text_encoder_type'],
             'freeze_text_encoder': config['model'].get('freeze_text_encoder', False)
         })
-        text_checkpoint = torch.load(config['model']['text_checkpoint'], weights_only=True) if config['model'].get('text_checkpoint', False) else False
+        # Check for regular checkpoint
+        if config['model'].get('text_checkpoint', False):
+            text_checkpoint = torch.load(config['model']['text_checkpoint'], map_location=device, weights_only=True)
 
     # Add fusion parameters only if using both modalities
     if config['data'].get('use_text', False) and config['data'].get('use_images', False):

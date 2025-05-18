@@ -168,3 +168,38 @@ def plot_error_distribution(predictions, targets, output_dir=None):
     
     if output_dir:
         plt.savefig(os.path.join(output_dir, 'error_distribution.png'))
+
+
+def plot_contrastive_history(history, output_dir=None):
+    """
+    Plot contrastive training history.
+    
+    Args:
+        history: Dictionary with training history
+        output_dir: Directory to save plots
+    """
+    import matplotlib.pyplot as plt
+    
+    plt.figure(figsize=(12, 5))
+    
+    # Plot loss
+    plt.subplot(1, 2, 1)
+    plt.plot(history['train_loss'], label='Train Loss')
+    plt.plot(history['val_loss'], label='Val Loss')
+    plt.title('Contrastive Loss')
+    plt.xlabel('Epoch')
+    plt.legend()
+    
+    # Plot accuracy
+    plt.subplot(1, 2, 2)
+    plt.plot(history['train_accuracy'], label='Train')
+    plt.plot(history['val_accuracy'], label='Val')
+    plt.title('Matching Accuracy')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.legend()
+    
+    plt.tight_layout()
+    
+    if output_dir:
+        plt.savefig(os.path.join(output_dir, 'contrastive_history.png'))

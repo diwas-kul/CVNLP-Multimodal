@@ -1,0 +1,43 @@
+# Dataset configuration
+data:
+  data_path: "/media/diwas/SanDisk2TBSSD/CVNLP/FINAL_DATASET"
+  train_file: "train_data_50k_split.csv"
+  test_file: "test_data_50k_split.csv"
+  max_images: 8
+  random_sample: true
+  regression_target: "price"
+  classification_target: "price_cat_50k"
+  use_text: true
+  use_images: true
+
+# Model configuration
+model:
+  encoder_type: "resnet50"
+  text_encoder_model: "bert-base-uncased"
+  text_encoder_type: "bert"
+  freeze_backbone: false
+  freeze_text_encoder: false
+  use_pretrained: true
+  max_text_length: 512
+
+# Contrastive learning configuration
+contrastive:
+  batch_size: 4
+  num_epochs: 30
+  learning_rate: 0.0001
+  weight_decay: 0.000001
+  projection_dim: 256
+  temperature: 0.07
+  scheduler_patience: 3
+  scheduler_factor: 0.5
+  early_stopping_patience: 10
+  save_checkpoint_frequency: 5
+
+# Training configuration
+train:
+  num_workers: 16
+  pin_memory: true
+
+# Logging
+logging:
+  log_dir: "work_dir"
